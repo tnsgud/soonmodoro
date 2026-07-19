@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:soonmodoro/widgets/count_card.dart';
 import 'package:soonmodoro/widgets/corner_border_painter.dart';
 import 'package:soonmodoro/widgets/header.dart';
 import 'package:soonmodoro/models/timer_mode.dart';
+import 'package:soonmodoro/widgets/selection_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -78,8 +80,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _onTapStart() {
     if (_timerIsActive) {
-      _timerIsActive = false;
+      _controllers[_currentControllerIndex].stop();
       _timer.cancel();
+
+      setState(() {
+        _timerIsActive = false;
+      });
       return;
     }
 
@@ -148,11 +154,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   void _onTap(TimerMode mode) {
     if (_timerIsActive) {
       _timer.cancel();
+      _controllers[_currentControllerIndex].reset();
       _timerIsActive = false;
     }
 
     setState(() {
       HomeScreen.timerMode = mode;
+      _currentControllerIndex = mode.index;
       _time = HomeScreen.timerMode.time;
     });
   }
@@ -164,160 +172,224 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     return Scaffold(
       backgroundColor: Color(0xff141218),
       body: SafeArea(
-        child: Column(
-          children: [
-            Header(),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Column(
+            children: [
+              Header(),
 
-            Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '집중 사이클 $_currentSessionCount/4',
+                        style: TextStyle(
+                          fontSize: 10,
+                          color: Color(0xff8a8594),
+                          letterSpacing: 2,
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          ...List<Container>.generate(
+                            _currentSessionCount % 5,
+                            (int index) {
+                              return Container(
+                                margin: EdgeInsets.only(left: 5),
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: Color(0xff8e5cd9),
+                                  shape: BoxShape.circle,
+                                ),
+                              );
+                            },
+                          ),
+                          ...List<Container>.generate(
+                            4 - (_currentSessionCount % 5),
+                            (int index) {
+                              return Container(
+                                margin: EdgeInsets.only(left: 5),
+                                width: 10,
+                                height: 10,
+                                decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  shape: BoxShape.circle,
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0, end: 0.25 * _currentSessionCount),
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeInOut,
+                    builder: (context, value, child) {
+                      return LinearProgressIndicator(
+                        value: value,
+                        minHeight: 10,
+                        backgroundColor: Color(0xff2A2630),
+                        color: Color(0xff8e5cd9),
+                        borderRadius: BorderRadius.circular(10),
+                      );
+                    },
+                  ),
+                ],
+              ),
+
+              Expanded(
+                child: Stack(
+                  alignment: AlignmentGeometry.center,
                   children: [
-                    Text('집중 사이클 $_currentSessionCount/4'),
-                    Row(
+                    CustomPaint(
+                      size: Size(250, 250),
+                      painter: CornerBorderPainter(
+                        cornerLength: 20,
+                        strokeWidth: 3,
+                        color: Color(0xff2a2630),
+                      ),
+                    ),
+                    AnimatedBuilder(
+                      animation: _controllers[_currentControllerIndex],
+                      builder: (context, child) {
+                        return SizedBox(
+                          width: 200,
+                          height: 200,
+                          child: CircularProgressIndicator(
+                            value:
+                                1.0 -
+                                _controllers[_currentControllerIndex]
+                                    .value, // 시간이 갈수록 0으로 감소
+                            strokeWidth: 15,
+                            strokeCap: StrokeCap.round,
+                            color: Color(0xff8e5cd9),
+                            backgroundColor: Color(0xff2A2630),
+                          ),
+                        );
+                      },
+                    ),
+
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ...List<Container>.generate(_currentSessionCount % 5, (
-                          int index,
-                        ) {
-                          return Container(
-                            margin: EdgeInsets.only(left: 5),
-                            width: 10,
-                            height: 10,
-                            decoration: BoxDecoration(
-                              color: Colors.amber,
-                              shape: BoxShape.circle,
-                            ),
-                          );
-                        }),
-                        ...List<Container>.generate(
-                          4 - (_currentSessionCount % 5),
-                          (int index) {
-                            return Container(
-                              margin: EdgeInsets.only(left: 5),
-                              width: 10,
-                              height: 10,
-                              decoration: BoxDecoration(
-                                color: Colors.grey,
-                                shape: BoxShape.circle,
-                              ),
-                            );
-                          },
+                        Text(
+                          HomeScreen.timerMode.label,
+                          style: TextStyle(
+                            color: Color(0xffc9c2d6),
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${format(_time ~/ 60)}:${format(_time % 60)}',
+                          style: TextStyle(
+                            fontSize: 54,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            letterSpacing: 1,
+                          ),
                         ),
                       ],
                     ),
                   ],
                 ),
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0, end: 0.25 * _currentSessionCount),
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeInOut,
-                  builder: (context, value, child) {
-                    return LinearProgressIndicator(
-                      value: value,
-                      minHeight: 10,
-                      backgroundColor: Colors.grey.shade300,
-                      color: Colors.blue,
-                    );
-                  },
-                ),
-              ],
-            ),
+              ),
 
-            Stack(
-              alignment: AlignmentGeometry.center,
-              children: [
-                CustomPaint(
-                  size: Size(200, 150),
-                  painter: CornerBorderPainter(
-                    cornerLength: 20,
-                    strokeWidth: 3,
-                    color: Colors.blue,
-                  ),
-                ),
-                AnimatedBuilder(
-                  animation: _controllers[_currentControllerIndex],
-                  builder: (context, child) {
-                    return SizedBox(
-                      width: 100,
-                      height: 100,
-                      child: CircularProgressIndicator(
-                        value:
-                            1.0 -
-                            _controllers[_currentControllerIndex]
-                                .value, // 시간이 갈수록 0으로 감소
-                        strokeWidth: 8,
-                        color: Colors.blue,
-                        backgroundColor: Colors.grey.shade300,
+              Flex(
+                direction: Axis.horizontal,
+                spacing: 10,
+                children: TimerMode.values
+                    .map(
+                      (e) => Expanded(
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Color(0x0Dffffff),
+                            border: Border.all(
+                              color: Color(0x1fffffff),
+                              width: 1,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: SelectionButton(
+                            timerMode: e,
+                            label: e.label,
+                            onTap: () => _onTap(e),
+                          ),
+                        ),
                       ),
-                    );
-                  },
-                ),
+                    )
+                    .toList(),
+              ),
+              SizedBox(height: 10),
 
-                Column(
-                  children: [
-                    Text(HomeScreen.timerMode.label),
-                    Text(
-                      '${format(_time ~/ 60)}:${format(_time % 60)}',
-                      style: TextStyle(
-                        fontSize: 48,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
+              Flex(
+                direction: Axis.horizontal,
+                spacing: 10,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Color(0x0Dffffff),
+                      border: Border.all(color: Color(0x1fffffff), width: 1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: TextButton(
+                      onPressed: _onTapReset,
+                      child: Text(
+                        '초기화',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
-                    Text('집중'),
-                  ],
-                ),
-              ],
-            ),
-
-            Row(
-              children: TimerMode.values
-                  .map((e) => _selectionButton(timerMode: e, label: e.label))
-                  .toList(),
-            ),
-
-            TextButton(onPressed: _onTapReset, child: Text('Reset')),
-
-            TextButton(
-              onPressed: _onTapStart,
-              child: Text(_timerIsActive ? 'stop' : 'start'),
-            ),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey,
-                      border: BoxBorder.all(color: Colors.blueGrey, width: 5),
-                    ),
-                    child: Column(
-                      children: [Text('$_totalSessionCount'), Text('완료 세션')],
+                  ),
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Color(0x0Dffffff),
+                        border: Border.all(color: Color(0x1fffffff), width: 1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: TextButton(
+                        onPressed: _onTapStart,
+                        child: Text(
+                          _timerIsActive ? '중지' : '시작',
+                          style: TextStyle(
+                            color: Color(0xff8e5cd9),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey,
-                      border: BoxBorder.all(color: Colors.blueGrey, width: 5),
-                    ),
-                    child: Column(
-                      children: [
-                        Text(format(_totalFocusTime ~/ 60)),
-                        Text('집중 시간(분)'),
-                      ],
+                ],
+              ),
+
+              SizedBox(height: 10),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Expanded(
+                    child: CountCard(count: _totalSessionCount, text: '완료 세션'),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: CountCard(
+                      count: _totalFocusTime ~/ 60,
+                      text: '완료 시간(분)',
                     ),
                   ),
-                ),
-              ],
-            ),
-            Row(mainAxisAlignment: MainAxisAlignment.spaceAround, children: [
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

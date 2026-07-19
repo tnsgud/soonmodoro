@@ -16,16 +16,16 @@ class Header extends StatelessWidget {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey,
-                letterSpacing: 1.2,
+                color: Color(0xff7a7f84),
+                letterSpacing: 1.5,
               ),
             ),
             Text(
               '집중 타이머',
               style: TextStyle(
-                color: Colors.deepPurple,
+                color: Color(0xff8e5cd9),
                 fontSize: 24,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ],
