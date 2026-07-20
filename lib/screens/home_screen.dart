@@ -1,11 +1,16 @@
 import 'dart:async';
+import 'dart:developer';
 
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:soonmodoro/widgets/count_card.dart';
 import 'package:soonmodoro/widgets/corner_border_painter.dart';
 import 'package:soonmodoro/widgets/header.dart';
 import 'package:soonmodoro/models/timer_mode.dart';
 import 'package:soonmodoro/widgets/selection_button.dart';
+import 'package:vibration/vibration.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,7 +23,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final List<AnimationController> _controllers = [];
-  late Timer _timer;
+  Timer? _timer;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   bool _timerIsActive = false;
 
@@ -49,22 +55,84 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         duration: Duration(seconds: fifteen),
       ),
     );
+
+    _initAudio();
+
     super.initState();
   }
 
   @override
   void dispose() {
-    _timer.cancel();
+    _timer?.cancel();
     for (var c in _controllers) {
       c.dispose();
     }
+    _audioPlayer.dispose();
+    Vibration.cancel();
     super.dispose();
   }
 
+  Future<void> _playAlarm() async {
+    try {
+      await _audioPlayer.seek(Duration.zero);
+      _audioPlayer.play();
+      if (await Vibration.hasVibrator()) {
+        Vibration.vibrate(duration: 5000);
+      }
+    } catch (e) {
+      log(e.toString());
+      return;
+    }
+  }
+
+  Future<void> _initAudio() async {
+    try {
+      final session = await AudioSession.instance;
+      await session.configure(
+        AudioSessionConfiguration(
+          avAudioSessionCategory: AVAudioSessionCategory.playback,
+          avAudioSessionCategoryOptions:
+              AVAudioSessionCategoryOptions.duckOthers,
+          avAudioSessionMode: AVAudioSessionMode.defaultMode,
+          avAudioSessionSetActiveOptions:
+              AVAudioSessionSetActiveOptions.notifyOthersOnDeactivation,
+          androidAudioAttributes: AndroidAudioAttributes(
+            contentType: AndroidAudioContentType.sonification,
+            usage: AndroidAudioUsage.alarm,
+          ),
+          androidAudioFocusGainType:
+              AndroidAudioFocusGainType.gainTransientMayDuck,
+          androidWillPauseWhenDucked: false,
+        ),
+      );
+    } catch (e) {
+      log(e.toString());
+      return;
+    }
+
+    try {
+      await _audioPlayer.setAsset('assets/audios/default.mp3');
+    } catch (e) {
+      log(e.toString());
+      return;
+    }
+
+    if (!mounted) return;
+    _audioPlayer.setLoopMode(LoopMode.one);
+  }
+
   void _onTapStart() {
+    HapticFeedback.heavyImpact();
+
+    Vibration.cancel();
+
+    if (_audioPlayer.playing) {
+      _audioPlayer.stop();
+    }
+
     if (_timerIsActive) {
       _controllers[_currentControllerIndex].stop();
-      _timer.cancel();
+      _timer?.cancel();
 
       setState(() {
         _timerIsActive = false;
@@ -77,24 +145,30 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _timerIsActive = true;
     });
 
+    _timer?.cancel();
     _timer = Timer.periodic(Duration(seconds: 1), _tickTimer);
   }
 
   void _tickTimer(Timer timer) {
     setState(() {
+      if (HomeScreen.timerMode == TimerMode.focus) {
+        _totalFocusTime++;
+      }
       _time--;
-      _totalFocusTime++;
     });
 
     if (_time > 0) {
       return;
     }
 
+    timer.cancel();
+
     _controllers[_currentControllerIndex].reset();
     switch (HomeScreen.timerMode) {
       case TimerMode.focus:
         _currentSessionCount++;
         _totalSessionCount++;
+        _playAlarm();
         if (_currentSessionCount % _longBreakLimit == 0) {
           HomeScreen.timerMode = TimerMode.longBreak;
           _currentControllerIndex = 2;
@@ -117,17 +191,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() {
       _timerIsActive = false;
       _time = HomeScreen.timerMode.time;
-      timer.cancel();
     });
   }
 
   void _onTapReset() {
-    _timer.cancel();
+    _timer?.cancel();
     _timerIsActive = false;
     HomeScreen.timerMode = TimerMode.focus;
     _currentSessionCount = 0;
     _controllers[_currentControllerIndex].reset();
     _currentControllerIndex = 0;
+
+    if (_audioPlayer.playing) {
+      _audioPlayer.stop();
+    }
+
+    Vibration.cancel();
 
     setState(() {
       _time = HomeScreen.timerMode.time;
@@ -136,10 +215,16 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _onTap(TimerMode mode) {
     if (_timerIsActive) {
-      _timer.cancel();
+      _timer?.cancel();
       _controllers[_currentControllerIndex].reset();
       _timerIsActive = false;
     }
+
+    if (_audioPlayer.playing) {
+      _audioPlayer.stop();
+    }
+
+    Vibration.cancel();
 
     setState(() {
       HomeScreen.timerMode = mode;
