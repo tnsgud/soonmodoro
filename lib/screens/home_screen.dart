@@ -61,23 +61,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  TextButton _selectionButton({
-    required TimerMode timerMode,
-    required String label,
-  }) {
-    return TextButton(
-      onPressed: () => _onTap(timerMode),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: HomeScreen.timerMode == timerMode
-              ? Colors.deepPurple
-              : Colors.white,
-        ),
-      ),
-    );
-  }
-
   void _onTapStart() {
     if (_timerIsActive) {
       _controllers[_currentControllerIndex].stop();
