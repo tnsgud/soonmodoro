@@ -1,11 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:just_audio/just_audio.dart';
 import 'package:soonmodoro/widgets/count_card.dart';
 import 'package:soonmodoro/widgets/corner_border_painter.dart';
 import 'package:soonmodoro/widgets/header.dart';
 import 'package:soonmodoro/models/timer_mode.dart';
 import 'package:soonmodoro/widgets/selection_button.dart';
+import 'package:vibration/vibration.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +22,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final List<AnimationController> _controllers = [];
   late Timer _timer;
+  final AudioPlayer _audioPlayer = AudioPlayer();
 
   bool _timerIsActive = false;
 
@@ -49,6 +53,9 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
         duration: Duration(seconds: fifteen),
       ),
     );
+
+    _initAudio();
+
     super.initState();
   }
 
@@ -58,10 +65,22 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     for (var c in _controllers) {
       c.dispose();
     }
+    _audioPlayer.dispose();
     super.dispose();
   }
 
+  Future<void> _initAudio() async {
+    await _audioPlayer.setAsset('assets/audios/default.mp3');
+    _audioPlayer.setLoopMode(LoopMode.one);
+  }
+
   void _onTapStart() {
+    HapticFeedback.heavyImpact();
+
+    if (_audioPlayer.playing) {
+      _audioPlayer.pause();
+    }
+
     if (_timerIsActive) {
       _controllers[_currentControllerIndex].stop();
       _timer.cancel();
@@ -95,6 +114,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       case TimerMode.focus:
         _currentSessionCount++;
         _totalSessionCount++;
+        Vibration.vibrate(duration: 5000);
+        _audioPlayer.play();
         if (_currentSessionCount % _longBreakLimit == 0) {
           HomeScreen.timerMode = TimerMode.longBreak;
           _currentControllerIndex = 2;
