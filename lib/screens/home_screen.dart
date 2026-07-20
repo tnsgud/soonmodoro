@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:developer';
 
+import 'package:audio_session/audio_session.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:just_audio/just_audio.dart';
@@ -67,26 +68,43 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       c.dispose();
     }
     _audioPlayer.dispose();
+    Vibration.cancel();
     super.dispose();
   }
 
   Future<void> _initAudio() async {
-    if (!mounted) return;
+    final session = await AudioSession.instance;
+    await session.configure(
+      AudioSessionConfiguration(
+        avAudioSessionCategory: AVAudioSessionCategory.playback,
+        avAudioSessionCategoryOptions: AVAudioSessionCategoryOptions.duckOthers,
+        avAudioSessionMode: AVAudioSessionMode.defaultMode,
+        avAudioSessionSetActiveOptions:
+            AVAudioSessionSetActiveOptions.notifyOthersOnDeactivation,
+        androidAudioAttributes: AndroidAudioAttributes(
+          contentType: AndroidAudioContentType.sonification,
+          usage: AndroidAudioUsage.alarm,
+        ),
+        androidAudioFocusGainType:
+            AndroidAudioFocusGainType.gainTransientMayDuck,
+        androidWillPauseWhenDucked: false,
+      ),
+    );
 
     try {
       await _audioPlayer.setAsset('assets/audios/default.mp3');
     } catch (e) {
       log(e.toString());
     }
+
+    if (!mounted) return;
     _audioPlayer.setLoopMode(LoopMode.one);
   }
 
   void _onTapStart() async {
     HapticFeedback.heavyImpact();
 
-    if (await Vibration.hasVibrator()) {
-      Vibration.cancel();
-    }
+    Vibration.cancel();
 
     if (_audioPlayer.playing) {
       _audioPlayer.stop();
@@ -107,15 +125,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _timerIsActive = true;
     });
 
+    _timer?.cancel();
     _timer = Timer.periodic(Duration(seconds: 1), _tickTimer);
   }
 
-  void _tickTimer(Timer timer) {
-    if (HomeScreen.timerMode == TimerMode.focus) {
-      _totalFocusTime++;
-    }
-
+  void _tickTimer(Timer timer) async {
     setState(() {
+      if (HomeScreen.timerMode == TimerMode.focus) {
+        _totalFocusTime++;
+      }
       _time--;
     });
 
@@ -128,8 +146,11 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       case TimerMode.focus:
         _currentSessionCount++;
         _totalSessionCount++;
-        Vibration.vibrate(duration: 5000);
+        await _audioPlayer.seek(Duration.zero);
         _audioPlayer.play();
+        if (await Vibration.hasVibrator()) {
+          Vibration.vibrate(duration: 5000);
+        }
         if (_currentSessionCount % _longBreakLimit == 0) {
           HomeScreen.timerMode = TimerMode.longBreak;
           _currentControllerIndex = 2;
@@ -156,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
   }
 
-  void _onTapReset() async {
+  void _onTapReset() {
     _timer?.cancel();
     _timerIsActive = false;
     HomeScreen.timerMode = TimerMode.focus;
@@ -168,16 +189,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _audioPlayer.stop();
     }
 
-    if (await Vibration.hasVibrator()) {
-      Vibration.cancel();
-    }
+    Vibration.cancel();
 
     setState(() {
       _time = HomeScreen.timerMode.time;
     });
   }
 
-  void _onTap(TimerMode mode) async {
+  void _onTap(TimerMode mode) {
     if (_timerIsActive) {
       _timer?.cancel();
       _controllers[_currentControllerIndex].reset();
@@ -188,9 +207,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       _audioPlayer.stop();
     }
 
-    if (await Vibration.hasVibrator()) {
-      Vibration.cancel();
-    }
+    Vibration.cancel();
 
     setState(() {
       HomeScreen.timerMode = mode;
