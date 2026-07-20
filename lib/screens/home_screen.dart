@@ -72,6 +72,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     super.dispose();
   }
 
+  Future<void> _playAlarm() async {
+    await _audioPlayer.seek(Duration.zero);
+    _audioPlayer.play();
+    if (await Vibration.hasVibrator()) {
+      Vibration.vibrate(duration: 5000);
+    }
+  }
+
   Future<void> _initAudio() async {
     final session = await AudioSession.instance;
     await session.configure(
@@ -101,7 +109,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _audioPlayer.setLoopMode(LoopMode.one);
   }
 
-  void _onTapStart() async {
+  void _onTapStart() {
     HapticFeedback.heavyImpact();
 
     Vibration.cancel();
@@ -129,7 +137,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _timer = Timer.periodic(Duration(seconds: 1), _tickTimer);
   }
 
-  void _tickTimer(Timer timer) async {
+  void _tickTimer(Timer timer) {
     setState(() {
       if (HomeScreen.timerMode == TimerMode.focus) {
         _totalFocusTime++;
@@ -146,11 +154,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       case TimerMode.focus:
         _currentSessionCount++;
         _totalSessionCount++;
-        await _audioPlayer.seek(Duration.zero);
-        _audioPlayer.play();
-        if (await Vibration.hasVibrator()) {
-          Vibration.vibrate(duration: 5000);
-        }
+        _playAlarm();
         if (_currentSessionCount % _longBreakLimit == 0) {
           HomeScreen.timerMode = TimerMode.longBreak;
           _currentControllerIndex = 2;
