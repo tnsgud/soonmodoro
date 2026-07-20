@@ -74,11 +74,15 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _audioPlayer.setLoopMode(LoopMode.one);
   }
 
-  void _onTapStart() {
+  void _onTapStart() async {
     HapticFeedback.heavyImpact();
 
+    if (await Vibration.hasVibrator()) {
+      Vibration.cancel();
+    }
+
     if (_audioPlayer.playing) {
-      _audioPlayer.pause();
+      _audioPlayer.stop();
     }
 
     if (_timerIsActive) {
@@ -142,7 +146,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     });
   }
 
-  void _onTapReset() {
+  void _onTapReset() async {
     _timer.cancel();
     _timerIsActive = false;
     HomeScreen.timerMode = TimerMode.focus;
@@ -150,16 +154,32 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     _controllers[_currentControllerIndex].reset();
     _currentControllerIndex = 0;
 
+    if (_audioPlayer.playing) {
+      _audioPlayer.stop();
+    }
+
+    if (await Vibration.hasVibrator()) {
+      Vibration.cancel();
+    }
+
     setState(() {
       _time = HomeScreen.timerMode.time;
     });
   }
 
-  void _onTap(TimerMode mode) {
+  void _onTap(TimerMode mode) async {
     if (_timerIsActive) {
       _timer.cancel();
       _controllers[_currentControllerIndex].reset();
       _timerIsActive = false;
+    }
+
+    if (_audioPlayer.playing) {
+      _audioPlayer.stop();
+    }
+
+    if (await Vibration.hasVibrator()) {
+      Vibration.cancel();
     }
 
     setState(() {
