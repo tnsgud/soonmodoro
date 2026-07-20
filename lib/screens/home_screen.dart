@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -21,7 +22,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   final List<AnimationController> _controllers = [];
-  late Timer _timer;
+  Timer? _timer;
   final AudioPlayer _audioPlayer = AudioPlayer();
 
   bool _timerIsActive = false;
@@ -61,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
-    _timer.cancel();
+    _timer?.cancel();
     for (var c in _controllers) {
       c.dispose();
     }
@@ -70,7 +71,13 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _initAudio() async {
-    await _audioPlayer.setAsset('assets/audios/default.mp3');
+    if (!mounted) return;
+
+    try {
+      await _audioPlayer.setAsset('assets/audios/default.mp3');
+    } catch (e) {
+      log(e.toString());
+    }
     _audioPlayer.setLoopMode(LoopMode.one);
   }
 
@@ -87,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
     if (_timerIsActive) {
       _controllers[_currentControllerIndex].stop();
-      _timer.cancel();
+      _timer?.cancel();
 
       setState(() {
         _timerIsActive = false;
@@ -104,9 +111,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _tickTimer(Timer timer) {
+    if (HomeScreen.timerMode == TimerMode.focus) {
+      _totalFocusTime++;
+    }
+
     setState(() {
       _time--;
-      _totalFocusTime++;
     });
 
     if (_time > 0) {
@@ -147,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   void _onTapReset() async {
-    _timer.cancel();
+    _timer?.cancel();
     _timerIsActive = false;
     HomeScreen.timerMode = TimerMode.focus;
     _currentSessionCount = 0;
@@ -169,7 +179,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
 
   void _onTap(TimerMode mode) async {
     if (_timerIsActive) {
-      _timer.cancel();
+      _timer?.cancel();
       _controllers[_currentControllerIndex].reset();
       _timerIsActive = false;
     }
