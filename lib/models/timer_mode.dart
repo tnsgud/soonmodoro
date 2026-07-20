@@ -2,9 +2,11 @@
 // const int fiveMinutes = 5 * 60;
 // const int fifteen = 15 * 60;
 
-const int twentyFiveMinutes = 10;
-const int fiveMinutes = 3;
-const int fifteen = 5;
+import 'package:flutter/foundation.dart';
+
+const int twentyFiveMinutes = kDebugMode ? 10 : 25 * 60;
+const int fiveMinutes = kDebugMode ? 3 : 5 * 60;
+const int fifteen = kDebugMode ? 5 : 15 * 60;
 
 enum TimerMode {
   focus('집중', twentyFiveMinutes),
