@@ -155,6 +155,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       return;
     }
 
+    timer.cancel();
+
     _controllers[_currentControllerIndex].reset();
     switch (HomeScreen.timerMode) {
       case TimerMode.focus:
@@ -183,7 +185,6 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
     setState(() {
       _timerIsActive = false;
       _time = HomeScreen.timerMode.time;
-      timer.cancel();
     });
   }
 
