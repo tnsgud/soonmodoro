@@ -81,6 +81,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       }
     } catch (e) {
       log(e.toString());
+      return;
     }
   }
 
