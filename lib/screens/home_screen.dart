@@ -73,10 +73,14 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 
   Future<void> _playAlarm() async {
-    await _audioPlayer.seek(Duration.zero);
-    _audioPlayer.play();
-    if (await Vibration.hasVibrator()) {
-      Vibration.vibrate(duration: 5000);
+    try {
+      await _audioPlayer.seek(Duration.zero);
+      _audioPlayer.play();
+      if (await Vibration.hasVibrator()) {
+        Vibration.vibrate(duration: 5000);
+      }
+    } catch (e) {
+      log(e.toString());
     }
   }
 
@@ -109,6 +113,7 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
       await _audioPlayer.setAsset('assets/audios/default.mp3');
     } catch (e) {
       log(e.toString());
+      return;
     }
 
     if (!mounted) return;
