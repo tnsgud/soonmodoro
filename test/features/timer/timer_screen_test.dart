@@ -17,11 +17,14 @@ Widget buildSubject({
   ),
   FakeAudioService? audio,
 }) {
+  final audioService = audio ?? FakeAudioService();
+  final hapticService = FakeHapticService();
+
   return ProviderScope(
     overrides: [
       timerDurationsProvider.overrideWithValue(durations),
-      audioServiceProvider.overrideWithValue(audio ?? FakeAudioService()),
-      hapticServiceProvider.overrideWithValue(FakeHapticService()),
+      audioServiceFactoryProvider.overrideWithValue(() => audioService),
+      hapticServiceFactoryProvider.overrideWithValue(() => hapticService),
     ],
     child: const MaterialApp(home: TimerScreen()),
   );

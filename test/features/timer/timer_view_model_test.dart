@@ -18,6 +18,11 @@ ProviderContainer buildContainer({
   FakeAudioService? audio,
   FakeHapticService? haptic,
 }) {
+  // 값이 아니라 팩토리를 대체한다. audioServiceProvider를 통째로 갈아끼우면
+  // 본문의 초기화 호출과 ref.onDispose 등록이 실행되지 않는다.
+  final audioService = audio ?? FakeAudioService();
+  final hapticService = haptic ?? FakeHapticService();
+
   return ProviderContainer(
     overrides: [
       timerDurationsProvider.overrideWithValue(
@@ -27,8 +32,8 @@ ProviderContainer buildContainer({
           longBreak: longBreakDuration,
         ),
       ),
-      audioServiceProvider.overrideWithValue(audio ?? FakeAudioService()),
-      hapticServiceProvider.overrideWithValue(haptic ?? FakeHapticService()),
+      audioServiceFactoryProvider.overrideWithValue(() => audioService),
+      hapticServiceFactoryProvider.overrideWithValue(() => hapticService),
     ],
   );
 }

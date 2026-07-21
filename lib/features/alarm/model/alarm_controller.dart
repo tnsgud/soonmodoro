@@ -27,8 +27,11 @@ class AlarmController {
     await Future.wait([_audio.stop(), _haptic.cancel()]);
   }
 
+  /// 진행 중인 진동만 멈춘다.
+  ///
+  /// [AudioService]는 자기 provider가 해제한다. 여기서 같이 해제하면 이중
+  /// 해제가 되고, 소유하지 않은 객체의 수명을 관리하게 된다.
   void dispose() {
     _haptic.cancel();
-    _audio.dispose();
   }
 }

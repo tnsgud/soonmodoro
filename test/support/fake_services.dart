@@ -17,6 +17,7 @@ class FakeAudioService extends AudioService {
   int initCount = 0;
   int playCount = 0;
   int stopCount = 0;
+  int disposeCount = 0;
 
   @override
   bool get isReady => ready;
@@ -42,7 +43,7 @@ class FakeAudioService extends AudioService {
   }
 
   @override
-  void dispose() {}
+  void dispose() => disposeCount++;
 }
 
 class FakeHapticService extends HapticService {
