@@ -1,33 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:soonmodoro/features/timer/view/components/surface_card.dart';
+import 'package:soonmodoro/shared/ui/app_colors.dart';
 
 class CountCard extends StatelessWidget {
-  final int count;
-  final String text;
+  final String value;
+  final String label;
 
-  const CountCard({super.key, required this.count, required this.text});
+  const CountCard({super.key, required this.value, required this.label});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Color(0x0Dffffff),
-        border: Border.all(color: Color(0x1fffffff), width: 1),
-        borderRadius: BorderRadius.circular(10),
-      ),
+    return SurfaceCard(
       child: Column(
         children: [
           Text(
-            '$count',
+            value,
             style: TextStyle(
-              color: Color(0xff8e5cd9),
+              color: primaryColor,
               fontSize: 20,
               fontWeight: FontWeight.bold,
             ),
           ),
           Text(
-            text,
+            label,
             style: TextStyle(
-              color: Color(0xff8a8594),
+              color: mutedColor,
               fontSize: 10,
               letterSpacing: 0.5,
             ),
