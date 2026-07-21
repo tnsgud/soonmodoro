@@ -11,6 +11,9 @@ import 'package:soonmodoro/shared/ui/app_colors.dart';
 /// 크기를 인자로 받지 않고 부모가 준 공간에서 스스로 정한다. 가로모드처럼
 /// 세로 공간이 줄어드는 상황에서도 호출부를 고칠 필요가 없다.
 class TimerDial extends StatelessWidget {
+  /// 기존 화면의 고정 크기. 아래 비율은 모두 이 값을 기준으로 계산된다.
+  static const _preferredSize = 250.0;
+
   final TimerMode mode;
   final Duration remaining;
   final Duration total;
@@ -26,7 +29,11 @@ class TimerDial extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final size = min(constraints.maxWidth, constraints.maxHeight);
+        // 공간이 넉넉하면 원래 크기(250)를 유지하고, 모자랄 때만 줄어든다.
+        final size = min(
+          min(constraints.maxWidth, constraints.maxHeight),
+          _preferredSize,
+        );
         final ringSize = size * 0.8;
         final fraction = total.inMilliseconds == 0
             ? 0.0
