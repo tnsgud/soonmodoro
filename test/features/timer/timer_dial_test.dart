@@ -8,6 +8,7 @@ Widget buildSubject({
   Duration remaining = const Duration(minutes: 25),
   Duration total = const Duration(minutes: 25),
   TimerMode mode = TimerMode.focus,
+  bool isRunning = false,
 }) {
   return MaterialApp(
     home: Scaffold(
@@ -15,7 +16,12 @@ Widget buildSubject({
         child: SizedBox(
           width: space,
           height: space,
-          child: TimerDial(mode: mode, remaining: remaining, total: total),
+          child: TimerDial(
+            mode: mode,
+            remaining: remaining,
+            total: total,
+            isRunning: isRunning,
+          ),
         ),
       ),
     ),

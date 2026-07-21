@@ -36,6 +36,7 @@ class TimerScreen extends ConsumerWidget {
                   mode: state.mode,
                   remaining: state.remaining,
                   total: durations.of(state.mode),
+                  isRunning: state.isRunning,
                 ),
               ),
               ModeSelector(
