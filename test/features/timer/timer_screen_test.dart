@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:soonmodoro/entities/timer_mode/model/timer_durations.dart';
 import 'package:soonmodoro/features/alarm/model/alarm_provider.dart';
+import 'package:soonmodoro/features/timer/view/components/alarm_notice.dart';
 import 'package:soonmodoro/features/timer/view/timer_screen.dart';
 import 'package:soonmodoro/features/timer/view_model/timer_view_model.dart';
 
@@ -14,11 +15,12 @@ Widget buildSubject({
     shortBreak: Duration(minutes: 5),
     longBreak: Duration(minutes: 15),
   ),
+  FakeAudioService? audio,
 }) {
   return ProviderScope(
     overrides: [
       timerDurationsProvider.overrideWithValue(durations),
-      audioServiceProvider.overrideWithValue(FakeAudioService()),
+      audioServiceProvider.overrideWithValue(audio ?? FakeAudioService()),
       hapticServiceProvider.overrideWithValue(FakeHapticService()),
     ],
     child: const MaterialApp(home: TimerScreen()),
@@ -58,6 +60,53 @@ void main() {
   testWidgets('세로 화면에서 오버플로가 없다', (tester) async {
     await tester.pumpWidget(buildSubject());
     expect(tester.takeException(), isNull);
+  });
+
+  group('알람 사용 불가 안내', () {
+    final noticeFinder = find.byType(AlarmNotice);
+
+    testWidgets('소리를 낼 수 없으면 안내가 뜬다', (tester) async {
+      await tester.pumpWidget(
+        buildSubject(audio: FakeAudioService(ready: false)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(noticeFinder, findsOneWidget);
+    });
+
+    testWidgets('정상일 때는 안내가 뜨지 않는다', (tester) async {
+      await tester.pumpWidget(buildSubject(audio: FakeAudioService()));
+      await tester.pumpAndSettle();
+
+      expect(noticeFinder, findsNothing);
+    });
+
+    testWidgets('초기화가 끝나기 전에는 안내가 뜨지 않는다', (tester) async {
+      await tester.pumpWidget(
+        buildSubject(
+          audio: FakeAudioService(
+            ready: false,
+            initDelay: const Duration(seconds: 1),
+          ),
+        ),
+      );
+
+      await tester.pump();
+      expect(noticeFinder, findsNothing, reason: '아직 loading 상태');
+
+      await tester.pump(const Duration(seconds: 1));
+      await tester.pump();
+      expect(noticeFinder, findsOneWidget, reason: '실패가 확정된 뒤');
+    });
+
+    testWidgets('안내가 떠도 레이아웃이 넘치지 않는다', (tester) async {
+      await tester.pumpWidget(
+        buildSubject(audio: FakeAudioService(ready: false)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
   });
 
   group('링과 숫자 동기화', () {

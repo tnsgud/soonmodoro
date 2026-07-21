@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:soonmodoro/features/alarm/model/alarm_provider.dart';
+import 'package:soonmodoro/features/timer/view/components/alarm_notice.dart';
 import 'package:soonmodoro/features/timer/view/components/cycle_progress.dart';
 import 'package:soonmodoro/features/timer/view/components/mode_selector.dart';
 import 'package:soonmodoro/features/timer/view/components/state_row.dart';
@@ -21,6 +23,8 @@ class TimerScreen extends ConsumerWidget {
     final state = ref.watch(timerViewModel);
     final viewModel = ref.read(timerViewModel.notifier);
     final durations = ref.watch(timerDurationsProvider);
+    // 초기화 중이거나 성공했으면 안내를 띄우지 않는다.
+    final alarmFailed = ref.watch(alarmReadyProvider).value == false;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -31,6 +35,7 @@ class TimerScreen extends ConsumerWidget {
             children: [
               const TimerHeader(),
               CycleProgress(cycleCount: state.cycleCount),
+              if (alarmFailed) const AlarmNotice(),
               Expanded(
                 child: TimerDial(
                   mode: state.mode,
