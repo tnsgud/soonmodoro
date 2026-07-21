@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:soonmodoro/shared/ui/app_colors.dart';
 
-class Header extends StatelessWidget {
-  const Header({super.key});
+class TimerHeader extends StatelessWidget {
+  const TimerHeader({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,14 +17,14 @@ class Header extends StatelessWidget {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
-                color: Color(0xff7a7f84),
+                color: mutedStrongColor,
                 letterSpacing: 1.5,
               ),
             ),
             Text(
               '집중 타이머',
               style: TextStyle(
-                color: Color(0xff8e5cd9),
+                color: primaryColor,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
               ),

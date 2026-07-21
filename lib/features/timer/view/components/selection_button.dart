@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:soonmodoro/screens/home_screen.dart';
-import 'package:soonmodoro/models/timer_mode.dart';
+import 'package:soonmodoro/shared/ui/app_colors.dart';
 
 class SelectionButton extends StatelessWidget {
-  final TimerMode timerMode;
   final String label;
-  final void Function() onTap;
+  final bool isSelected;
+  final VoidCallback onTap;
 
   const SelectionButton({
     super.key,
-    required this.timerMode,
     required this.label,
+    required this.isSelected,
     required this.onTap,
   });
 
@@ -20,11 +19,7 @@ class SelectionButton extends StatelessWidget {
       onPressed: onTap,
       child: Text(
         label,
-        style: TextStyle(
-          color: timerMode == HomeScreen.timerMode
-              ? Colors.deepPurple
-              : Colors.white,
-        ),
+        style: TextStyle(color: isSelected ? primaryColor : Colors.white),
       ),
     );
   }

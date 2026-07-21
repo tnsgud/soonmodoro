@@ -33,19 +33,21 @@ Flutter 관용어를 쓴다. FSD 자료와 대조할 때 참고할 대응표:
 | 이 프로젝트 | FSD 원문 | 의미 |
 |---|---|---|
 | `app/` | app | 진입점, DI, 테마 |
-| `screens/` | pages | 라우팅 단위 화면 |
-| `components/` | widgets | 재사용 조합 블록 (현재 없음) |
-| `features/` | features | 사용자 행위 + ViewModel |
+| `features/<slice>/view/` | pages + widgets | 화면과 그 하위 컴포넌트 |
+| `features/<slice>/view_model/` | features (model) | ViewModel |
+| `features/<slice>/model/` | features (model) | 상태 클래스 |
 | `entities/` | entities | 도메인 모델 |
 | `shared/` | shared | 범용 유틸·UI킷 |
 
-세그먼트(`ui/`, `model/`, `api/`, `lib/`)는 FSD 원문 그대로 쓴다.
+MVVM을 드러내기 위해 `ui/` 대신 `view/`와 `view_model/`을 세그먼트로 쓴다. `entities/`와 `shared/`는 FSD 원문대로 `model/`, `lib/`, `ui/`를 쓴다.
 
-의존성은 `app → screens → components → features → entities → shared` 방향으로만 흐르고, 같은 레이어끼리는 참조하지 않는다.
+별도의 `screens/` 레이어는 두지 않는다. 화면이 곧 기능 슬라이스의 뷰이므로 `features/timer/view/timer_screen.dart`가 화면 역할을 겸한다. 화면이 여러 슬라이스를 조합해야 할 만큼 커지면 그때 분리한다.
+
+의존성은 `app → features → entities → shared` 방향으로만 흐르고, 같은 레이어끼리는 참조하지 않는다.
 
 ### 승격 규칙
 
-**소비자가 둘 이상 생겼을 때 위 레이어로 올린다.** 현재 화면이 `timer` 하나뿐이므로 모든 컴포넌트는 `screens/timer/ui/components/`에 둔다. 최상위 `components/` 레이어는 만들지 않는다. 기록 화면이 `CountCard`를 재사용하는 시점에 승격한다.
+**소비자가 둘 이상 생겼을 때 위 레이어로 올린다.** 현재 화면이 `timer` 하나뿐이므로 모든 컴포넌트는 `features/timer/view/components/`에 둔다. 최상위 `components/` 레이어는 만들지 않는다. 기록 화면이 `CountCard`나 `SurfaceCard`를 재사용하는 시점에 승격한다.
 
 "가로모드에서도 쓴다"는 승격 사유가 아니다. 세로든 가로든 같은 `timer` 화면이므로 소비자는 하나다.
 
@@ -53,31 +55,34 @@ Flutter 관용어를 쓴다. FSD 자료와 대조할 때 참고할 대응표:
 
 ```
 lib/
-├── main.dart
+├── main.dart                              ProviderScope + App
 ├── app/
-│   ├── app.dart
+│   ├── app.dart                           MaterialApp
 │   └── theme/app_theme.dart
-├── screens/
-│   └── timer/ui/
-│       ├── timer_screen.dart
-│       └── components/
-│           ├── timer_header.dart
-│           ├── timer_dial.dart
-│           ├── corner_border_painter.dart
-│           ├── cycle_progress.dart
-│           ├── mode_selector.dart
-│           ├── selection_button.dart
-│           ├── timer_controls.dart
-│           ├── stats_row.dart
-│           ├── count_card.dart
-│           └── surface_card.dart
 ├── features/
-│   ├── timer/model/
-│   │   ├── timer_state.dart
-│   │   └── timer_view_model.dart
-│   └── alarm/model/alarm_controller.dart
+│   ├── timer/
+│   │   ├── model/timer_state.dart
+│   │   ├── view_model/timer_view_model.dart
+│   │   └── view/
+│   │       ├── timer_screen.dart
+│   │       └── components/
+│   │           ├── timer_header.dart
+│   │           ├── timer_dial.dart
+│   │           ├── corner_border_painter.dart
+│   │           ├── cycle_progress.dart
+│   │           ├── mode_selector.dart
+│   │           ├── selection_button.dart
+│   │           ├── timer_controls.dart
+│   │           ├── state_row.dart
+│   │           ├── count_card.dart
+│   │           └── surface_card.dart
+│   └── alarm/model/
+│       ├── alarm_controller.dart
+│       └── alarm_provider.dart
 ├── entities/
-│   ├── timer_mode/model/timer_mode.dart
+│   ├── timer_mode/model/
+│   │   ├── timer_mode.dart
+│   │   └── timer_durations.dart
 │   └── session/model/session.dart
 └── shared/
     ├── ui/app_colors.dart
@@ -85,6 +90,13 @@ lib/
         ├── audio_service.dart
         ├── haptic_service.dart
         └── duration_format.dart
+
+test/
+├── support/fake_services.dart
+├── shared/duration_format_test.dart
+└── features/timer/
+    ├── timer_view_model_test.dart
+    └── timer_screen_test.dart
 ```
 
 ## 파일별 내용
@@ -213,22 +225,22 @@ class AlarmController {
 
 정지 경로가 하나다. 현재는 시작·초기화·모드변경 세 곳에 같은 코드가 복붙돼 있고, `dispose()`에서 진동만 빠뜨렸던 것도 이 중복 때문이었다.
 
-### screens/
+### features/timer/view/
 
-**`screens/timer/ui/timer_screen.dart`** — `ConsumerWidget`. `ref`를 아는 유일한 위젯이다. 상태를 읽어 컴포넌트에 props로 내려준다.
+**`timer_screen.dart`** — `ConsumerWidget`. `ref`를 아는 유일한 위젯이다. 상태를 읽어 컴포넌트에 props로 내려준다.
 
-**`screens/timer/ui/components/`** — 전부 props와 콜백만 받는 순수 위젯.
+**`components/`** — 전부 props와 콜백만 받는 순수 위젯. Riverpod 컨테이너 없이 렌더링되므로 위젯 테스트가 가볍다.
 
 | 파일 | 시그니처 |
 |---|---|
 | `timer_header.dart` | 인자 없음 |
-| `timer_dial.dart` | `{TimerMode mode, Duration remaining, double progress}` |
+| `timer_dial.dart` | `{TimerMode mode, Duration remaining, Duration total}` |
 | `corner_border_painter.dart` | 현행 유지 |
 | `cycle_progress.dart` | `{int cycleCount}` |
 | `mode_selector.dart` | `{TimerMode selected, ValueChanged<TimerMode> onSelect}` |
 | `selection_button.dart` | `{String label, bool isSelected, VoidCallback onTap}` |
 | `timer_controls.dart` | `{bool isRunning, VoidCallback onToggle, VoidCallback onReset}` |
-| `stats_row.dart` | `{int sessionCount, Duration focusTime}` |
+| `state_row.dart` | `{int sessionCount, Duration focusTime}` |
 | `count_card.dart` | `{String value, String label}` |
 | `surface_card.dart` | `{Widget child}` — 반복되는 Container 데코 |
 
