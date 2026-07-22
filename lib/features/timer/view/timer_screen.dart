@@ -28,40 +28,89 @@ class TimerScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: bgColor,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            children: [
-              const TimerHeader(),
-              CycleProgress(cycleCount: state.cycleCount),
-              if (alarmFailed) const AlarmNotice(),
-              Expanded(
-                child: TimerDial(
-                  mode: state.mode,
-                  remaining: state.remaining,
-                  total: durations.of(state.mode),
-                  isRunning: state.isRunning,
+      body: OrientationBuilder(
+        builder: (context, orientation) {
+          if (orientation == Orientation.landscape) {
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsetsGeometry.symmetric(vertical: 10),
+                child: Row(
+                  children: [
+                    if (alarmFailed) AlarmNotice(),
+                    TimerDial(
+                      mode: state.mode,
+                      remaining: state.remaining,
+                      total: durations.of(state.mode),
+                      isRunning: state.isRunning,
+                    ),
+                    SizedBox(width: 30),
+                    Flexible(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          TimerHeader(),
+                          CycleProgress(cycleCount: state.cycleCount),
+                          SizedBox(height: 20),
+                          ModeSelector(
+                            selected: state.mode,
+                            onSelect: viewModel.selectMode,
+                          ),
+                          const SizedBox(height: 10),
+                          TimerControls(
+                            isRunning: state.isRunning,
+                            onToggle: viewModel.toggle,
+                            onReset: viewModel.reset,
+                          ),
+                          const SizedBox(height: 10),
+                          StateRow(
+                            sessionCount: state.completedFocusCount,
+                            focusTime: state.totalFocusTime,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              ModeSelector(
-                selected: state.mode,
-                onSelect: viewModel.selectMode,
+            );
+          }
+
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Column(
+                children: [
+                  const TimerHeader(),
+                  CycleProgress(cycleCount: state.cycleCount),
+                  if (alarmFailed) const AlarmNotice(),
+                  Expanded(
+                    child: TimerDial(
+                      mode: state.mode,
+                      remaining: state.remaining,
+                      total: durations.of(state.mode),
+                      isRunning: state.isRunning,
+                    ),
+                  ),
+                  ModeSelector(
+                    selected: state.mode,
+                    onSelect: viewModel.selectMode,
+                  ),
+                  const SizedBox(height: 10),
+                  TimerControls(
+                    isRunning: state.isRunning,
+                    onToggle: viewModel.toggle,
+                    onReset: viewModel.reset,
+                  ),
+                  const SizedBox(height: 10),
+                  StateRow(
+                    sessionCount: state.completedFocusCount,
+                    focusTime: state.totalFocusTime,
+                  ),
+                ],
               ),
-              const SizedBox(height: 10),
-              TimerControls(
-                isRunning: state.isRunning,
-                onToggle: viewModel.toggle,
-                onReset: viewModel.reset,
-              ),
-              const SizedBox(height: 10),
-              StateRow(
-                sessionCount: state.completedFocusCount,
-                focusTime: state.totalFocusTime,
-              ),
-            ],
-          ),
-        ),
+            ),
+          );
+        },
       ),
     );
   }
