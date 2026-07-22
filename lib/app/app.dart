@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:soonmodoro/app/theme/app_theme.dart';
+import 'package:soonmodoro/features/statistics/view/statistics_screen.dart';
 import 'package:soonmodoro/features/timer/view/timer_screen.dart';
 
 class App extends StatelessWidget {
@@ -10,7 +11,7 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: 'Soonmodoro',
       theme: appTheme,
-      home: const TimerScreen(),
+      home: StatisticsScreen(),
     );
   }
 }
