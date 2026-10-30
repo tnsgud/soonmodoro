@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:soonmodoro/features/statistics/view/components/stat_card.dart';
-import 'package:soonmodoro/features/statistics/view/components/stat_chart.dart';
+import 'package:soonmodoro/features/statistics/view/components/summary_cards.dart';
+import 'package:soonmodoro/features/statistics/view/components/trend_chart.dart';
 import 'package:soonmodoro/features/statistics/view/components/stat_header.dart';
-import 'package:soonmodoro/features/statistics/view/components/stat_list.dart';
+import 'package:soonmodoro/features/statistics/view/components/daily_list.dart';
 import 'package:soonmodoro/shared/ui/app_colors.dart';
 
 class StatisticsScreen extends StatefulWidget {
@@ -72,9 +72,9 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               StatHeader(),
               SizedBox(height: 15),
 
-              StatCard(data: cardData),
+              SummaryCards(data: cardData),
 
-              Expanded(child: StatChart(data: chartData)),
+              Expanded(child: TrendChart(data: chartData)),
               SizedBox(height: 15),
 
               Text(
@@ -86,7 +86,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                 ),
               ),
               SizedBox(height: 15),
-              Flexible(child: StatList(data: listData)),
+              Flexible(child: DailyList(data: listData)),
             ],
           ),
         ),

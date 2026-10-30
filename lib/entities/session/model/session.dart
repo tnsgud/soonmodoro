@@ -23,25 +23,33 @@ class Session {
 
   Map<String, Object?> toRow() {
     return {
-      'id': id,
-      'mode': mode,
-      'started_at': startedAt,
-      'ended_at': endedAt,
+      if (id != null) 'id': id,
+      'mode': mode.name,
+      'started_at': startedAt.millisecondsSinceEpoch,
+      'ended_at': endedAt.millisecondsSinceEpoch,
     };
   }
 
   factory Session.fromRow(Map<String, Object?> row) {
     return Session(
       id: row['id'] as int,
-      mode: TimerMode.focus,
-      startedAt: DateTime.fromMillisecondsSinceEpoch(
-        row['started_at'] as int,
-        isUtc: true,
-      ),
-      endedAt: DateTime.fromMillisecondsSinceEpoch(
-        row['ended_at'] as int,
-        isUtc: true,
-      ),
+      mode: TimerMode.values.byName(row['mode'] as String),
+      startedAt: DateTime.fromMillisecondsSinceEpoch(row['started_at'] as int),
+      endedAt: DateTime.fromMillisecondsSinceEpoch(row['ended_at'] as int),
+    );
+  }
+
+  Session copyWith({
+    int? id,
+    TimerMode? mode,
+    DateTime? startedAt,
+    DateTime? endedAt,
+  }) {
+    return Session(
+      id: id ?? this.id,
+      mode: mode ?? this.mode,
+      startedAt: startedAt ?? this.startedAt,
+      endedAt: endedAt ?? this.endedAt,
     );
   }
 }

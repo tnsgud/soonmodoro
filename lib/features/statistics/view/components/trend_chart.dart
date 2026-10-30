@@ -1,12 +1,10 @@
-import 'dart:math';
-
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:soonmodoro/shared/ui/app_colors.dart';
 
-class StatChart extends StatelessWidget {
+class TrendChart extends StatelessWidget {
   final List<double> data;
-  const StatChart({super.key, required this.data});
+  const TrendChart({super.key, required this.data});
 
   Widget getTitles(double value, TitleMeta meta) {
     const style = TextStyle(

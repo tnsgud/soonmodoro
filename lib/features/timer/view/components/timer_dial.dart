@@ -89,7 +89,7 @@ class TimerDial extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  mode.label,
+                  mode.name,
                   style: TextStyle(
                     color: labelColor,
                     fontSize: size * 0.056,

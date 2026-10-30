@@ -14,11 +14,11 @@ class StatListData {
   });
 }
 
-class StatList extends StatelessWidget {
+class DailyList extends StatelessWidget {
   final List<StatListData> data;
   final DateFormat _format = DateFormat.MMMEd('ko-kr');
 
-  StatList({super.key, required this.data});
+  DailyList({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {

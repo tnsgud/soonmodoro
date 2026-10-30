@@ -7,7 +7,7 @@ enum TimerMode {
   shortBreak('짧은 휴식'),
   longBreak('긴 휴식');
 
-  final String label;
+  final String name;
 
-  const TimerMode(this.label);
+  const TimerMode(this.name);
 }

@@ -23,7 +23,7 @@ class ModeSelector extends StatelessWidget {
             (mode) => Expanded(
               child: SurfaceCard(
                 child: SelectionButton(
-                  label: mode.label,
+                  label: mode.name,
                   isSelected: mode == selected,
                   onTap: () => onSelect(mode),
                 ),

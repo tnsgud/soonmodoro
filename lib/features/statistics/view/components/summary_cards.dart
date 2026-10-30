@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:soonmodoro/shared/ui/app_colors.dart';
 
-class StatCard extends StatelessWidget {
+class SummaryCards extends StatelessWidget {
   final List<String> labels = ['누석 세션', '누석 집중', '현재 연속(일)', '최고 연속(일)'];
   final List<Object> data;
 
-  StatCard({super.key, required this.data});
+  SummaryCards({super.key, required this.data});
 
   @override
   Widget build(BuildContext context) {
